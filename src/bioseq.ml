@@ -22,28 +22,19 @@ let search_fasta_naive genome_file string =
   (* On l'affiche *)
   List.iter (fun x -> Printf.printf "%d " x) i_list
 
-
-(* renvoi la liste de l'ensemble des couples (i, s) avec s la sous chaine commençant à l'indice i de la chaine [string] (pour tout i allant de 0 à |string|*)
-let extract_suffixes string =
-  let length = String.length string in
-  let rec aux acc = function
-    | i when i = length -> acc
-    | i ->
-       let substring = String.sub string i (length - i)
-       in aux ((i, substring)::acc) (i + 1)
-  in List.rev (aux [] 0)
-
 let suffix_array seq_file =
-  let (_,seq) = Fasta.extract_first_seq (Fasta.of_file seq_file) in
-  (* extraction de la liste des suffixes*)
-  let suffix_list = extract_suffixes (seq^"$") in
-  (*trie de la liste des suffixe*)
-  let f (_, s1) (_, s2) = compare s1 s2 in
-  let sorted_suffix_list = List.sort f suffix_list in
-  (* extraction des indices *)
-  let i_list = List.map (fun (i, _) -> i) sorted_suffix_list in
-  List.iter (fun x -> Printf.printf "%d " x) i_list
+  let seq = Fasta.extract_first_seq (Fasta.of_file seq_file) in
+  let i_array = Sequence.extract_suffix_array seq in
+  Array.iter (fun x -> Printf.printf "%d " x) i_array
 
+
+
+	     
+let search_fasta_sa genome_file read_seq =
+  let seq = Fasta.extract_first_seq (Fasta.of_file genome_file) in
+  let l = Sequence.search read_seq seq in
+  List_mp.display (print_int) l
+	     
   
 (* fonction calculant le temps d'execution d'une fonction passé en paramètre *)
 let chrono f =
@@ -68,6 +59,10 @@ let main =
      let genome_file = Sys.argv.(2)
      in let time = chrono (fun () ->  suffix_array genome_file)
 	in Printf.printf "\n\nexecuté en %f secondes" time
-			 
+  | "search-fasta-sa" ->
+     let genome_file = Sys.argv.(2)
+     and read_seq =  Sys.argv.(3)
+     in  let time = chrono (fun () ->  search_fasta_sa genome_file read_seq)
+	 in Printf.printf "\n\nexecuté en %f secondes" time
   | _ -> prerr_endline "commande inconue"
 	       
